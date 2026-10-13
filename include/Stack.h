@@ -117,8 +117,11 @@ public:
             newStorage = storage->GetSubSequence(0, storage->GetLength() - 1);
         }
 
-        newStorage = newStorage->Concat(other->storage);
-        return new Stack<T>(newStorage);
+        Sequence<T>* joined = newStorage->Concat(other->storage);
+        if (joined != newStorage) {
+            delete newStorage; // для иммутабл: Concat вернул новый объект, копию надо освободить
+        }
+        return new Stack<T>(joined);
     }
 
     Stack<T>* GetSubSequence(int startIndex, int endIndex) const{
