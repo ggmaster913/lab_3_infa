@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 #include <stdexcept>
+#include <string>
+#include <complex>
 
 #include "Stack.h"
 #include "lab2/MutableArraySequence.h"
@@ -312,4 +314,82 @@ TEST(StackTest, OperatorEquals) {
     Stack<int> empty1(new MutableArraySequence<int>());
     Stack<int> empty2(new MutableArraySequence<int>());
     EXPECT_TRUE(empty1 == empty2);
+}
+
+// --- другие типы элементов ---
+
+static double halfOf(const double& x) { return x / 2; }
+static double sumDouble(const double& acc, const double& x) { return acc + x; }
+static bool isPositive(const double& x) { return x > 0; }
+
+// вещественные и комплексные числа
+TEST(StackTest, WorksWithDoubleAndComplex) {
+    Stack<double> s(new MutableArraySequence<double>());
+    s.Push(1.5);
+    s.Push(-2.0);
+    s.Push(4.0);
+    EXPECT_DOUBLE_EQ(s.Peek(), 4.0);
+    EXPECT_DOUBLE_EQ(s.Reduce<double>(sumDouble, 0.0), 3.5);
+
+    Stack<double>* halves = s.Map(halfOf);
+    EXPECT_DOUBLE_EQ(halves->Peek(), 2.0);
+    Stack<double>* positive = s.Where(isPositive);
+    EXPECT_EQ(positive->GetCount(), 2);
+    delete halves;
+    delete positive;
+
+    Stack<std::complex<double>> c(new MutableListSequence<std::complex<double>>());
+    c.Push(std::complex<double>(1, 2));
+    c.Push(std::complex<double>(3, -1));
+    EXPECT_EQ(c.Pop(), std::complex<double>(3, -1));
+    EXPECT_EQ(c.Peek(), std::complex<double>(1, 2));
+}
+
+// строки: поиск образца, копия и сравнение
+TEST(StackTest, WorksWithStrings) {
+    Stack<std::string> s(new MutableArraySequence<std::string>());
+    s.Push("a");
+    s.Push("b");
+    s.Push("c");
+    EXPECT_EQ(s.Get(0), "c");
+
+    Stack<std::string> pattern(new MutableArraySequence<std::string>());
+    pattern.Push("b");
+    pattern.Push("c");
+    EXPECT_EQ(s.FindSubsequence(pattern), 0);
+
+    Stack<std::string> copy(s);
+    EXPECT_TRUE(copy == s);
+    EXPECT_EQ(s.Pop(), "c");
+    EXPECT_FALSE(copy == s);
+}
+
+// студенту нужен конструктор по умолч (из-за DynamicArray) и operator== (для поиска и ==)
+struct Student {
+    int id;
+    std::string name;
+    bool operator==(const Student& other) const { return id == other.id && name == other.name; }
+};
+
+static int studentId(const Student& s) { return s.id; }
+
+// структура студента на иммутабл и на списке
+TEST(StackTest, WorksWithStudents) {
+    Stack<Student> s(new ImmutableArraySequence<Student>());
+    s.Push({1, "Иванов"});
+    s.Push({2, "Петров"});
+    EXPECT_EQ(s.Peek().name, "Петров");
+
+    Stack<int>* ids = s.Map(studentId);
+    EXPECT_EQ(ids->Peek(), 2);
+    EXPECT_EQ(ids->Get(1), 1);
+    delete ids;
+
+    Stack<Student> other(new MutableListSequence<Student>());
+    other.Push({1, "Иванов"});
+    other.Push({2, "Петров"});
+    EXPECT_TRUE(s == other);
+
+    EXPECT_EQ(s.Pop().id, 2);
+    EXPECT_EQ(s.GetCount(), 1);
 }
