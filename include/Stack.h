@@ -19,6 +19,7 @@ public:
     }
 
     Stack(const Stack<T>& other){
+        // GetSubSequence не умеет пустой диапазон, поэтому пустой создаём сами
         if (other.IsEmpty()) {
             DynamicArray<T> emptyData(0);
             this->storage = new MutableArraySequence<T>(emptyData);
@@ -62,6 +63,7 @@ public:
         int newLen = storage->GetLength() - 1;
         Sequence<T>* newStorage = nullptr;
         if (newLen > 0) { 
+            // удаления в Sequence нет, поэтому копируем всё кроме вершины, это O(n)
             newStorage = storage->GetSubSequence(0, newLen - 1);
         }else {
             DynamicArray<T> emptyData(0);
@@ -74,7 +76,7 @@ public:
 
     const T& Peek() const{
         if (this->IsEmpty()) throw std::out_of_range("стек пуст");
-        return storage->GetLast();
+        return storage->GetLast(); // вершина = последний эл storage
     }
 
     bool IsEmpty() const{
@@ -87,7 +89,7 @@ public:
     
     const T& Get(int index) const override {
         if (index < 0 || index >= storage->GetLength()) throw std::out_of_range("неправильный индекс");
-        return storage->Get(storage->GetLength() - index - 1);
+        return storage->Get(storage->GetLength() - index - 1); // индекс считаем от вершины, тк вершина в конце
     }
 
     template<typename T2>
@@ -157,7 +159,7 @@ public:
     Stack<T> operator+(const Stack<T>& other) const{  
         Stack<T>* concatenated = this->Concat(&other);
         Stack<T> result(*concatenated);
-        delete concatenated;
+        delete concatenated; // копию забрали в result, указатель больше не нужен
         return result;
     } 
 
