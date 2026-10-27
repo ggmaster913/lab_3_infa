@@ -36,11 +36,11 @@ int ReadInt(const char* prompt) {
         if (std::cin >> val) {
             return val;
         }
-        if (std::cin.eof()) {
+        if (std::cin.eof()) { // ввод закончился совсем (Ctrl+D), читать больше нечего
             std::exit(0);
         }
-        std::cin.clear();
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cin.clear(); // иначе cin так и останется в ошибке и дальше ничего не прочитает
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // выкидываем остаток строки с неправильным вводом
         std::cout << "Ошибка: некорректный ввод. Ожидается целое число.\n";
     }
 }
@@ -110,37 +110,44 @@ Stack<int>* BuildStackInteractive() {
         fillChoice = ReadInt("Ваш выбор: ");
     }
 
-    if (fillChoice == 2) {
-        int count = ReadInt("Количество элементов (0..1000): ");
-        while (count < 0 || count > 1000) {
-            std::cout << "Количество должно быть в диапазоне от 0 до 1000.\n";
-            count = ReadInt("Количество элементов: ");
-        }
-        for (int i = 0; i < count; ++i) {
-            int val = ReadInt("Элемент: ");
-            stack->Push(val);
-        }
-    } else if (fillChoice == 3) {
-        int count = ReadInt("Количество элементов (0..1000): ");
-        while (count < 0 || count > 1000) {
-            std::cout << "Количество должно быть в диапазоне от 0 до 1000.\n";
-            count = ReadInt("Количество элементов: ");
-        }
-        int minVal = 0, maxVal = 0;
-        while (true) {
-            minVal = ReadInt("Минимум диапазона: ");
-            maxVal = ReadInt("Максимум диапазона: ");
-            if (minVal <= maxVal) {
-                break;
+    switch (fillChoice) {
+        case 2: {
+            int count = ReadInt("Количество элементов (0..1000): ");
+            while (count < 0 || count > 1000) {
+                std::cout << "Количество должно быть в диапазоне от 0 до 1000.\n";
+                count = ReadInt("Количество элементов: ");
             }
-            std::cout << "Ошибка: минимум не может быть больше максимума. Повторите ввод.\n";
+            for (int i = 0; i < count; ++i) {
+                int val = ReadInt("Элемент: ");
+                stack->Push(val);
+            }
+            break;
         }
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<int> dist(minVal, maxVal);
-        for (int i = 0; i < count; ++i) {
-            stack->Push(dist(gen));
+        case 3: {
+            int count = ReadInt("Количество элементов (0..1000): ");
+            while (count < 0 || count > 1000) {
+                std::cout << "Количество должно быть в диапазоне от 0 до 1000.\n";
+                count = ReadInt("Количество элементов: ");
+            }
+            int minVal = 0, maxVal = 0;
+            while (true) {
+                minVal = ReadInt("Минимум диапазона: ");
+                maxVal = ReadInt("Максимум диапазона: ");
+                if (minVal <= maxVal) {
+                    break;
+                }
+                std::cout << "Ошибка: минимум не может быть больше максимума. Повторите ввод.\n";
+            }
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<int> dist(minVal, maxVal);
+            for (int i = 0; i < count; ++i) {
+                stack->Push(dist(gen));
+            }
+            break;
         }
+        default: // 1 - пустой стек
+            break;
     }
 
     std::cout << "Созданный стек:\n";
@@ -362,8 +369,8 @@ void ExecuteNumberTheoryMenu() {
                     if (l > r) {
                         throw std::out_of_range("левая граница не может быть больше правой");
                     }
-                    if (r - l + 1 > 50000) {
-                        throw std::invalid_argument("длина отрезка не должна превышать 50 000");
+                    if (r - l + 1 > 10000000) {
+                        throw std::invalid_argument("длина отрезка не должна превышать 10 000 000");
                     }
 
                     Sequence<int>* range = Range(l, r);
@@ -378,7 +385,7 @@ void ExecuteNumberTheoryMenu() {
                 }
                 case 3: {
                     int n = ReadInt("Введите число для факторизации (2..50000): ");
-                    if (n < 2 || n > 50000) {
+                    if (n < 2 || n > 10000000) { // 
                         throw std::invalid_argument("число должно быть в диапазоне от 2 до 50 000");
                     }
 

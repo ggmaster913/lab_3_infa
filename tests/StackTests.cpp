@@ -7,6 +7,7 @@
 #include "lab2/MutableArraySequence.h"
 #include "lab2/MutableListSequence.h"
 #include "lab2/ImmutableArraySequence.h"
+#include "lab2/ImmutableListSequence.h"
 
 
 // функции-помощники
@@ -35,11 +36,15 @@ TEST(StackTest, PushPopLifoOrder) {
 
 }    
 
-// пустой стек бросает при pop и peek
-TEST(StackTest, PopAndPeekOnEmptyThrow) {
-    Stack<int> s(new MutableArraySequence<int>());
-    EXPECT_THROW(s.Pop(), std::out_of_range);
-    EXPECT_THROW(s.Peek(), std::out_of_range);
+// pop и peek на пустом стеке, и после снятия последнего эл стек снова пустой
+TEST(StackTest, PopAndPeekOnEmptyStack) {
+    Stack<int> stack(new MutableArraySequence<int>());
+    EXPECT_THROW(stack.Pop(), std::out_of_range); 
+    EXPECT_THROW(stack.Peek(), std::out_of_range); 
+    stack.Push(7);
+    EXPECT_EQ(stack.Pop(), 7);
+    EXPECT_TRUE(stack.IsEmpty());
+    EXPECT_THROW(stack.Pop(), std::out_of_range);
 }
 
 // проверка на nullptr в конструкторе
@@ -47,51 +52,77 @@ TEST(StackTest, ConstructorNullptrThrows) {
     EXPECT_THROW(Stack<int>(nullptr), std::invalid_argument);
 }
 
-// отсчет элементов от вершины и границы
-TEST(StackTest, GetCountsFromTopAndBounds) {
-    Stack<int> s(new MutableArraySequence<int>());
-    s.Push(1);
-    s.Push(2);
-    s.Push(3);
-
-    EXPECT_EQ(s.Get(0), 3);
-    EXPECT_EQ(s.Get(1), 2);
-    EXPECT_EQ(s.Get(2), 1);
-    EXPECT_EQ(s.Get(0), s.Peek());
-
-    EXPECT_THROW(s.Get(-1), std::out_of_range);
-    EXPECT_THROW(s.Get(3), std::out_of_range);
+// get считает от вершины
+TEST(StackTest, GetFromTop) {
+    Stack<int> stack(new MutableArraySequence<int>());
+    stack.Push(10);
+    stack.Push(20);
+    stack.Push(30);
+    EXPECT_EQ(stack.Peek(), 30);
+    EXPECT_EQ(stack.Get(0), 30);
+    EXPECT_EQ(stack.Get(1), 20);
+    EXPECT_EQ(stack.Get(2), 10);
+    EXPECT_THROW(stack.Get(-1), std::out_of_range);
+    EXPECT_THROW(stack.Get(3), std::out_of_range);
+    stack.Pop();
+    EXPECT_EQ(stack.Get(0), 20);
+    EXPECT_EQ(stack.GetCount(), 2);
 }
 
-// стек на связном списке и на иммутабельном массиве
-TEST(StackTest, WorksOnListAndImmutableBacking) {
-    Stack<int> listStack(new MutableListSequence<int>());
-    listStack.Push(1);
-    listStack.Push(2);
-    listStack.Push(3);
-    EXPECT_EQ(listStack.Pop(), 3);
-    EXPECT_EQ(listStack.Pop(), 2);
-    EXPECT_EQ(listStack.Pop(), 1);
+// одно и то же на всех четырёх хранилищах: внутри push и pop работают по-разному
+TEST(StackTest, WorksOnAllStorages) {
+    int arr[] = {1 ,2, 3};
+    Stack<int> stack1(new MutableArraySequence<int>(arr, 3));
+    Stack<int> stack2(new ImmutableArraySequence<int>(arr, 3));
+    Stack<int> stack3(new MutableListSequence<int>(arr, 3));
+    Stack<int> stack4(new ImmutableListSequence<int>(arr, 3));
 
-    Stack<int> immutStack(new ImmutableArraySequence<int>());
-    immutStack.Push(1);
-    immutStack.Push(2);
-    immutStack.Push(3);
-    EXPECT_EQ(immutStack.Pop(), 3);
-    EXPECT_EQ(immutStack.Pop(), 2);
-    EXPECT_EQ(immutStack.Pop(), 1);
+    EXPECT_EQ(stack1.Peek(), 3);
+    EXPECT_EQ(stack1.Get(2), 1);
+    EXPECT_EQ(stack1.Pop(), 3);
+    EXPECT_EQ(stack1.GetCount(), 2);
+    EXPECT_EQ(stack1.Peek(), 2);
+    
+    EXPECT_EQ(stack2.Peek(), 3);
+    EXPECT_EQ(stack2.Get(2), 1);
+    EXPECT_EQ(stack2.Pop(), 3);
+    EXPECT_EQ(stack2.GetCount(), 2);
+    EXPECT_EQ(stack2.Peek(), 2);
+
+    EXPECT_EQ(stack3.Peek(), 3);
+    EXPECT_EQ(stack3.Get(2), 1);
+    EXPECT_EQ(stack3.Pop(), 3);
+    EXPECT_EQ(stack3.GetCount(), 2);
+    EXPECT_EQ(stack3.Peek(), 2);
+    
+    EXPECT_EQ(stack4.Peek(), 3);
+    EXPECT_EQ(stack4.Get(2), 1);
+    EXPECT_EQ(stack4.Pop(), 3);
+    EXPECT_EQ(stack4.GetCount(), 2);
+    EXPECT_EQ(stack4.Peek(), 2);
+
+    EXPECT_TRUE(stack1 == stack4);
 }
 
-// полиморфизм через интерфейс icollection
-TEST(StackTest, ICollectionPolymorphism) {
-    Stack<int> s(new MutableArraySequence<int>());
-    s.Push(1);
-    s.Push(2);
-    s.Push(3);
+// копия через указатель на ICollection, не зная что там стек
+TEST(StackTest, CopyThroughICollection) {
+    Stack<int> stack(new MutableListSequence<int>());
+    stack.Push(1);
+    stack.Push(2);
+    stack.Push(3);
 
-    ICollection<int>* col = &s;
-    EXPECT_EQ(col->GetCount(), 3);
-    EXPECT_EQ(col->Get(0), 3);
+    ICollection<int>* col = &stack;
+    ICollection<int>* copy = col->Copy();
+    EXPECT_EQ(copy->GetCount(), 3);
+    EXPECT_EQ(copy->Get(0), 3);
+
+    stack.Push(99);
+    EXPECT_EQ(copy->GetCount(), 3);
+    EXPECT_EQ(copy->Get(0), 3);
+    EXPECT_EQ(col->GetCount(), 4);
+    EXPECT_EQ(col->Get(0), 99);
+
+    delete copy;
 }
 
 // конструктор копирования: копия независима от оригинала
@@ -178,58 +209,76 @@ TEST(StackTest, MapWhereReduce) {
     delete emptyFiltered;
 }
 
-// concat: длины, пустые стеки и nullptr
-TEST(StackTest, ConcatLengthsEmptyAndNullptr) {
+// concat не портит исходные стеки: a на мутабл (без копии concat дописал бы прямо в a), b на иммутабл
+TEST(StackTest, ConcatKeepsOriginals) {
     Stack<int> a(new MutableArraySequence<int>());
     a.Push(1);
     a.Push(2);
-    a.Push(3);
+    Stack<int> b(new ImmutableListSequence<int>());
+    b.Push(3);
+    b.Push(4);
 
-    Stack<int> b(new MutableArraySequence<int>());
-    b.Push(10);
-    b.Push(20);
+    Stack<int>* res = a.Concat(&b);
+    EXPECT_EQ(res->GetCount(), 4);
+    EXPECT_EQ(res->Get(0), 4);
+    EXPECT_EQ(res->Get(1), 3);
+    EXPECT_EQ(res->Get(2), 2);
+    EXPECT_EQ(res->Get(3), 1);
+    EXPECT_EQ(a.GetCount(), 2);
+    EXPECT_EQ(a.Peek(), 2);
+    EXPECT_EQ(b.GetCount(), 2);
+    EXPECT_EQ(b.Peek(), 4);
 
-    Stack<int>* res1 = a.Concat(&b);
-    EXPECT_EQ(res1->GetCount(), 5);
-    EXPECT_EQ(res1->Peek(), 20);
+    Stack<int>* res2 = b.Concat(&a);
+    EXPECT_EQ(res2->Get(0), 2);
+    EXPECT_EQ(res2->Get(1), 1);
+    EXPECT_EQ(res2->Get(2), 4);
+    EXPECT_EQ(res2->Get(3), 3);
+    EXPECT_EQ(b.GetCount(), 2);
 
-    Stack<int> empty(new MutableArraySequence<int>());
+    Stack<int> sum = a + b;
+    EXPECT_TRUE(sum == *res);
 
-    Stack<int>* res2 = a.Concat(&empty);
-    EXPECT_EQ(res2->GetCount(), 3);
-
-    Stack<int>* res3 = empty.Concat(&a);
-    EXPECT_EQ(res3->GetCount(), 3);
+    Stack<int> chain = a + b + a;
+    EXPECT_EQ(chain.GetCount(), 6);
+    EXPECT_EQ(chain.Peek(), 2);
 
     EXPECT_THROW(a.Concat(nullptr), std::invalid_argument);
 
-    delete res1;
+    delete res;
     delete res2;
-    delete res3;
 }
 
-// срез подпоследовательности с вершины и ошибки индексов
-TEST(StackTest, GetSubSequenceFromTopAndErrors) {
-    Stack<int> s(new MutableArraySequence<int>());
+// кусок из GetSubSequence находится FindSubsequence там же, откуда вырезан: оба считают от вершины
+TEST(StackTest, SubSequenceAndFindAgree) {
+    Stack<int> stack(new MutableListSequence<int>());
     for (int i = 1; i <= 5; ++i) {
-        s.Push(i);
+        stack.Push(i);
     }
 
-    Stack<int>* sub1 = s.GetSubSequence(0, 1);
-    EXPECT_EQ(sub1->GetCount(), 2);
-    EXPECT_EQ(sub1->Get(0), 5);
-    EXPECT_EQ(sub1->Get(1), 4);
+    Stack<int>* sub = stack.GetSubSequence(1, 3);
+    EXPECT_EQ(sub->GetCount(), 3);
+    EXPECT_EQ(sub->Get(0), 4);
+    EXPECT_EQ(sub->Get(1), 3);
+    EXPECT_EQ(sub->Get(2), 2);
+    EXPECT_EQ(stack.FindSubsequence(*sub), 1);
+    EXPECT_EQ(stack.GetCount(), 5);
 
-    Stack<int>* sub2 = s.GetSubSequence(4, 4);
-    EXPECT_EQ(sub2->GetCount(), 1);
-    EXPECT_EQ(sub2->Get(0), 1);
+    Stack<int>* full = stack.GetSubSequence(0, 4);
+    EXPECT_TRUE(*full == stack);
 
-    EXPECT_THROW(s.GetSubSequence(-1, 2), std::out_of_range);
-    EXPECT_THROW(s.GetSubSequence(0, 5), std::out_of_range);
-    EXPECT_THROW(s.GetSubSequence(3, 1), std::out_of_range);
+    // от вершины в стеке идёт 4, потом 3, а в образце наоборот
+    Stack<int> pattern(new MutableArraySequence<int>());
+    pattern.Push(4);
+    pattern.Push(3);
+    EXPECT_EQ(stack.FindSubsequence(pattern), -1);
 
-    delete sub1;
-    delete sub2;
+    EXPECT_THROW(stack.GetSubSequence(3, 1), std::out_of_range);
+    EXPECT_THROW(stack.GetSubSequence(0, 5), std::out_of_range);
+    EXPECT_THROW(stack.GetSubSequence(-1, 0), std::out_of_range);
+
+    delete sub;
+    delete full;
 }
 
 // поиск подпоследовательности 

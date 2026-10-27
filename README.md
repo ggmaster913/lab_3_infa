@@ -7,14 +7,14 @@
 
 | Пункт методички | Что это | Файл |
 |---|---|---|
-| С-3 | Стек `Stack<T>` | `include/Stack.h` |
-| М-1 | Интерфейс `ICollection<T>` для стека | `include/Stack.h` |
-| М-3 | Перегрузка операторов `+` и `==` | `include/Stack.h` |
-| А-2.1 | Рекуррентная последовательность 1-го порядка (факториал) | `include/RecurrentSequence.h` |
-| А-2.2 | Рекуррентная последовательность 2-го порядка (числа Фибоначчи) | `include/RecurrentSequence.h` |
-| А-2.3 | Линейная рекуррента произвольного порядка по списку коэффициентов | `include/RecurrentSequence.h` |
-| А-3.2 | Определение простых чисел через `Range` и `Where` | `include/NumberTheory.h` |
-| А-3.3 | Разложение числа на простые множители | `include/NumberTheory.h` |
+| С-3 | Стек `Stack<T>` | `include/Stack.h`, `Stack.tpp` |
+| М-1 | Интерфейс `ICollection<T>` для стека | `include/Stack.h`, `Stack.tpp` |
+| М-3 | Перегрузка операторов `+` и `==` | `include/Stack.h`, `Stack.tpp` |
+| А-2.1 | Рекуррентная последовательность 1-го порядка (факториал) | `include/RecurrentSequence.*`, `src/RecurrentSequence.cpp` |
+| А-2.2 | Рекуррентная последовательность 2-го порядка (числа Фибоначчи) | `include/RecurrentSequence.*`, `src/RecurrentSequence.cpp` |
+| А-2.3 | Линейная рекуррента произвольного порядка по списку коэффициентов | `include/RecurrentSequence.*` |
+| А-3.2 | Определение простых чисел через `Range` и `Where` | `include/NumberTheory.h`, `src/NumberTheory.cpp` |
+| А-3.3 | Разложение числа на простые множители | `include/NumberTheory.h`, `src/NumberTheory.cpp` |
 
 ### Стек
 
@@ -33,10 +33,15 @@
 
 ```
 include/
-  lab2/                 база из ЛР-2 без изменений
-  Stack.h               стек
+  lab2/                 заголовки базы из ЛР-2 без изменений
+  Stack.h / .tpp        стек
   NumberTheory.h        Range, IsPrime, разложение на простые множители
-  RecurrentSequence.h   рекуррентные последовательности
+  RecurrentSequence.h / .tpp
+                        рекуррентные последовательности
+src/
+  lab2/                 нешаблонная часть базы из ЛР-2 (Bit, BitSequence)
+  NumberTheory.cpp
+  RecurrentSequence.cpp
 tests/
   Tests.cpp             тесты базы ЛР-2
   StackTests.cpp        тесты стека
@@ -44,6 +49,10 @@ tests/
 ui/
   ConsoleUI.cpp         консольное меню
 ```
+
+У шаблонов объявления лежат в `.h`, а тела — в `.tpp`, который подключается
+в конце `.h`: компилятору нужно видеть тело шаблона там, где подставляется `T`,
+поэтому вынести его в `.cpp` нельзя. Обычные функции и классы — в `src/*.cpp`.
 
 ## Сборка
 
