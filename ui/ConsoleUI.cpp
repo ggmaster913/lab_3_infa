@@ -369,7 +369,7 @@ void ExecuteNumberTheoryMenu() {
                     if (l > r) {
                         throw std::out_of_range("левая граница не может быть больше правой");
                     }
-                    if (r - l + 1 > 10000000) {
+                    if (static_cast<long long>(r) - l + 1 > 10000000) { // в long long, иначе при больших границах r - l + 1 переполнит int
                         throw std::invalid_argument("длина отрезка не должна превышать 10 000 000");
                     }
 
@@ -384,9 +384,9 @@ void ExecuteNumberTheoryMenu() {
                     break;
                 }
                 case 3: {
-                    int n = ReadInt("Введите число для факторизации (2..50000): ");
-                    if (n < 2 || n > 10000000) { // 
-                        throw std::invalid_argument("число должно быть в диапазоне от 2 до 50 000");
+                    int n = ReadInt("Введите число для факторизации (2..10000000): ");
+                    if (n < 2 || n > 10000000) {
+                        throw std::invalid_argument("число должно быть в диапазоне от 2 до 10 000 000");
                     }
 
                     Sequence<int>* factors = Factorialize(n);
